@@ -1,0 +1,108 @@
+image: maven:3.8.4-openjdk-17
+
+options:
+  docker: true
+
+definitions:
+  steps:
+    - step: &BuildAndTest
+        name: Build and Test
+        caches:
+          - maven
+        script:
+          - mvn -B verify -e --file pom.xml
+        after-script:
+          # Collect checkstyle results, if any, and convert to Bitbucket Code Insights.
+          - pipe: atlassian/checkstyle-report:0.3.0
+
+    - step: &SecurityScan
+        name: Security Scan
+        script:
+          # Run a security scan for sensitive data.
+          # See more security tools at https://bitbucket.org/product/features/pipelines/integrations?&category=security
+          - pipe: atlassian/git-secrets-scan:0.5.1
+
+    - step: &DockerfileLinting
+        name: Dockerfile linting
+        image: hadolint/hadolint:latest-debian
+        script:
+          - hadolint src/main/docker/Dockerfile
+
+    - step: &semgrep
+       script:
+          - docker run -v $(pwd):/src --workdir /src returntocorp/semgrep-agent:v1 semgrep-agent  --config "p/java"
+       services:
+          - docker
+       caches:
+          - docker
+
+    - step: &DockerImageBuildAndPublishOnECR
+        oidc: true
+        name: Build docker image and publish onto AWS ECR
+        script:
+          - git pull
+          - mvn clean
+          - mvn package -e
+          - mvn versions:set -DremoveSnapshot
+          - VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.1.0:evaluate -Dexpression=project.version | grep -e '^[[:digit:]]')
+          - docker build -f ./src/main/docker/Dockerfile -t graphql-springboot-api .
+          - pipe: atlassian/aws-ecr-push-image:1.5.0
+            variables:
+              AWS_DEFAULT_REGION: 'eu-west-2'
+              AWS_OIDC_ROLE_ARN: 'arn:aws:iam::967071094996:role/daemon-bitbucket-ecr'
+              IMAGE_NAME: graphql-springboot-api
+              TAGS: '${VERSION} latest'
+        services:
+          - docker
+        caches:
+          - docker
+
+    - step: &PatchVersionUpdate
+        name: Patch Version Update
+        script:
+          - git pull
+          - mvn validate -DbumpPatch  # Setting up new project version For our repo using Semantic Versioning.
+          - VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.1.0:evaluate -Dexpression=project.version | sed 's/$/-SNAPSHOT/'  | grep -e '^[[:digit:]]') # Extracting the version number from the pom file
+          - echo ${VERSION} # Printing out the version
+          - mvn versions:set -DnewVersion=${VERSION}  # Adding -SNAPSHOT to the newly created version
+          - git add pom.xml
+          - git commit -m "[skip ci] Update the version number in the pom.xml file"
+          - git push
+
+    - step: &Minor/Major_VersionUpdate
+        name: Minor/Major Version Update
+        script:
+          - git pull
+#         Variable possible values: -DbumpMinor / -DbumpMajor
+          - mvn validate $VERSION_BUMP_TYPE  # Setting up new project version For our repo using Semantic Versioning.
+          - VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.1.0:evaluate -Dexpression=project.version | sed 's/$/-SNAPSHOT/'  | grep -e '^[[:digit:]]') # Extracting the version number from the pom file
+          - echo ${VERSION} # Printing out the version
+          - mvn versions:set -DnewVersion=${VERSION}  # Adding -SNAPSHOT to the newly created version
+          - git add pom.xml
+          - git commit -m "[skip ci] Update the version number in the pom.xml file"
+          - mvn -B -DlocalCheckout=true release:clean release:prepare release:perform -DdevelopmentVersion=${VERSION} -DscmCommentPrefix="[skip ci]" # Tagging the repo with the new bumped version
+
+pipelines:
+  default:
+    - parallel:
+        - step: *BuildAndTest
+        - step: *SecurityScan
+        - step: *semgrep
+        - step: *DockerfileLinting
+
+  branches:
+    master:
+      - parallel:
+          - step: *BuildAndTest
+          - step: *SecurityScan
+          - step: *DockerfileLinting
+          - step: *semgrep
+      - step: *PatchVersionUpdate
+
+  custom:
+    MINOR/MAJOR Release:
+      - variables:
+          - name: VERSION_BUMP_TYPE
+      - step: *DockerfileLinting
+      - step: *Minor/Major_VersionUpdate
+      - step: *DockerImageBuildAndPublishOnECR

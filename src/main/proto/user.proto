@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_package =   "daemn.userservice.grpc";
+option java_outer_classname = "UserServiceProto";
+
+package grpcUser;
+
+service User {
+
+  rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {}
+  rpc GetInfo (GetInfoRequest) returns (GetInfoResponse) {}
+  rpc FollowUser (FollowUserRequest) returns (FollowUserResponse) {}
+  rpc UnfollowUser (UnfollowUserRequest) returns (UnfollowUserResponse) {}
+  rpc Follows (FollowsRequest) returns (FollowsResponse) {}
+}
+message CreateUserRequest {
+  string email           = 1;
+  string username        = 2;
+  string password        = 3;
+}
+message CreateUserResponse {
+  string email           = 1;
+  string username        = 2;
+  string password        = 3;
+  string userid          = 4;
+}
+message GetInfoRequest{
+  string userid          = 1;
+}
+message GetInfoResponse{
+  string email           = 1;
+  string username        = 2;
+  string password        = 3;
+  string userid          = 4;
+  repeated string follows = 5;
+}
+message FollowUserRequest{
+  string useridOwner     = 1;
+  string useridFollow    = 2;
+}
+message FollowUserResponse{
+  string useridOwner     = 1;
+  string useridFollow    = 2;
+}
+message UnfollowUserRequest{
+  string useridOwner     = 1;
+  string useridUnfollow  = 2;
+}
+message UnfollowUserResponse{
+  string useridOwner     = 1;
+  string useridUnfollow  = 2;
+}
+message FollowsRequest{
+  string useridOwner     = 1;
+}
+message FollowsResponse{
+  repeated string follows = 1;
+}

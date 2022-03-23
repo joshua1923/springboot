@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_package = "daemn.postService.grpc";
+option java_outer_classname = "CreatePostProto";
+
+package postservice;
+
+service PostService {
+  rpc createPost(CreatePostRequest) returns (CreatePostResponse);
+  rpc deletePost(DeletePostRequest) returns (DeletePostResponse);
+  rpc requestPost(RequestPostRequest) returns (RequestPostResponse);
+  rpc updatePost(UpdatePostRequest) returns (UpdatePostResponse);
+  rpc listPostsByUser(ListPostsByUserRequest) returns (ListPostsByUserResponse);
+  rpc listAllPosts(google.protobuf.Empty) returns (ListAllPostsResponse);
+}
+
+message CreatePostRequest{
+  string body = 1;
+  string userID = 2;
+}
+
+message CreatePostResponse{
+  string postID = 1;
+  string body = 2;
+  string userID = 3;
+  google.protobuf.Timestamp createdAt = 4;
+}
+
+message DeletePostRequest{
+  string postID = 1;
+}
+
+message DeletePostResponse{
+  string confirmationMessage = 1;
+}
+
+message Empty{
+
+}
+
+message RequestPostRequest{
+  string postID = 1;
+}
+
+message RequestPostResponse{
+  string postID = 1;
+  string body = 2;
+  string userID = 3;
+  google.protobuf.Timestamp createdAt = 4;
+}
+
+message UpdatePostRequest{
+  string postID = 1;
+  string body = 2;
+}
+
+message UpdatePostResponse{
+  string postID = 1;
+  string body = 2;
+  string userID = 3;
+  google.protobuf.Timestamp createdAt = 4;
+}
+
+message ListPostsByUserRequest{
+  string userID = 1;
+}
+
+message ListPostsByUserResponse{
+  repeated RequestPostResponse requestPostResponse = 1;
+}
+
+message ListAllPostsResponse{
+  repeated RequestPostResponse requestPostResponse = 1;
+}

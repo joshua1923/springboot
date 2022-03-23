@@ -1,0 +1,66 @@
+type Query {
+    getUserInfo(userid: String): User
+
+    getCommentInfo(commentID: String): Comment
+
+    listAllPosts: [Post]
+
+    listPostsByUser(userID: String): [Post]
+
+    requestPost(postID: String): Post
+
+    getFollows(userID: String): [String]
+
+}
+
+
+
+type Mutation {
+    createUser(
+        email: String
+        username: String
+        password: String
+    ): User
+
+    createPost(
+        body: String
+        userID: String
+    ): Post
+
+    deletePost(
+        postId: String
+    ): String
+
+    updatePost(
+        postID: String
+        body: String
+    ): Post
+
+    createComment(
+        body: String
+        postID: String
+        userID: String
+    ): Comment
+
+    deleteComment(
+        commentID: String
+    ): String
+
+    updateComment(
+        commentID: String
+        body: String
+    ): Comment
+
+    followUser(
+        userIDOwner: String
+        userIDFollow: String
+    ): String
+
+    unfollowUser(
+        userIDOwner: String
+        userIDUnollow: String
+    ): String
+
+}
+
+

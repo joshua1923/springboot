@@ -1,0 +1,12 @@
+type User {
+    email: String
+    username: String
+    password: String
+    userid: String
+    follows: [String]
+
+    ownerPosts: [Post]
+    followsPosts: [Post]
+    createPost(body: String): Post
+}
+

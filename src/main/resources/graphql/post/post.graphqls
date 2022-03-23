@@ -1,0 +1,11 @@
+type Post {
+    postID: String
+    body: String
+    createdAt: Float
+    userID: String
+
+    feedComments: [Comment]
+    getUserInfoFromPost: User
+    createComment(body: String): Comment
+}
+

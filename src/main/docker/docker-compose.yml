@@ -1,0 +1,75 @@
+# -- Running all services on docker-compose
+# - checkout the repos of all 3 services (user-service, comment-service, post-service)
+# - build docker images for all 3 services and for this graphql-api 
+# individually using the commands provided in their Dockerfiles
+# - open a terminal session on the folder containing this file
+# - run 'docker-compose up -d' command to run all of them together
+
+# -- Connecting all services together on docker-compose
+# This docker-compose runs this graphql app and the 3 related services on a network (services-net)
+# They are able to connect over the network using DNS calls.
+# The default application.properties file located in the resources folder configures the app to look
+# for the apps on the localhost.
+# This docker-compose uses a volume dir to override the application.properties with one that configures this app
+# to look for DNS names on the network. (in our case the services names)
+# This separate external application.properties file is located ub ./docker-compose/external-config and it is accessible
+# from the docker environment via a volume directory as described below.
+
+# -- Using the app in graphql playground
+#  You can access the graphql playground UI at the following link. In there you can find all the schemas and start making graphql requests.
+#URL for the graphql playground UI:
+#  http://localhost:8080/playground
+
+version: "3.8"
+
+networks:
+  services-net:
+
+services:
+
+  graphql-springboot-api:
+    depends_on: 
+      - user-service
+      - comment-service
+      - post-service
+    image: graphql-springboot-api
+    hostname: graphql-springboot-api
+    container_name: graphql-springboot-api
+    volumes:
+    # this config volume contains a docker custom application.properties file
+    # that configures the graphql app to consume services running in other
+    # docker containers, calling the DNS on services-net network
+      - ./external-config:/config/
+    ports:
+      - 8080:8080
+    networks:
+      - services-net
+
+  user-service:
+    image: user-service
+    hostname: user-service
+    container_name: user-service
+    ports:
+      - 9090:9090
+    networks:
+      - services-net
+
+  comment-service:
+    image: comment-service
+    hostname: comment-service
+    container_name: comment-service
+    ports:
+      - 9092:9092
+    networks:
+      - services-net
+
+  post-service:
+    image: post-service
+    hostname: post-service
+    container_name: post-service
+    ports:
+      - 9091:9091
+    networks:
+      - services-net
+
+  

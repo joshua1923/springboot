@@ -1,0 +1,10 @@
+type Comment {
+    commentID: String
+    userID: String
+    postID: String
+    body: String
+
+    getPostInfo: Post
+    getUserInfoFromComment: User
+}
+

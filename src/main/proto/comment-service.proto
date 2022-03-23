@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_package = "daemn.commentsService.grpc";
+option java_outer_classname = "CommentsProto";
+
+
+package Comments;
+
+service CommentService{
+  rpc CreateComment(CreateCommentRequest) returns(CreateCommentResponse);
+  rpc GetComment(GetCommentRequest) returns(GetCommentResponse);
+  rpc DeleteComment(DeleteCommentRequest) returns(DeleteCommentResponse);
+  rpc UpdateComment(UpdateCommentRequest) returns(UpdateCommentResponse);
+  rpc GetPostComments(GetPostCommentsRequest) returns(GetPostCommentsResponse);
+}
+
+message CreateCommentRequest{
+  string userID = 1;
+  string postID = 2;
+  string body = 3;
+  string commentID =4;
+}
+
+message CreateCommentResponse{
+  string commentID = 4;
+  string userID = 1;
+  string postID = 2;
+  string body = 3;
+}
+
+message GetCommentRequest{
+  string commentID = 1;
+}
+
+message GetCommentResponse{
+  string commentID = 4;
+  string userID = 1;
+  string postID = 2;
+  string body = 3;
+}
+
+
+message DeleteCommentRequest{
+  string commentID = 1;
+}
+
+message DeleteCommentResponse{
+  string confirmationMessage = 1;
+}
+
+message UpdateCommentResponse{
+  string commentID = 4;
+  string userID = 1;
+  string postID = 2;
+  string body = 3;
+}
+
+message UpdateCommentRequest{
+  string commentID = 1;
+  string body = 2;
+}
+
+message GetPostCommentsRequest{
+  string postID = 1;
+}
+
+message GetPostCommentsResponse{
+  repeated GetCommentResponse getCommentResponse = 1;
+}
